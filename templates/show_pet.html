@@ -2,6 +2,14 @@
 
 {% block content %}
 
+<div class="card">
+  <div class="card-body">
+    This is some text within a card body.
+  </div>
+</div>
+
+
+<div class='text-center'>
 <img class='img-thumbnail' src="{{pet.photo_url}}" alt="">
 
 <p><strong>Name:</strong> {{pet.name}}</p>
@@ -10,7 +18,7 @@
 <p><strong>Additional Notes:</strong> {{pet.notes}}</p>
 <p><strong>Availability:</strong> 
    {% if pet.available == True %} Available! {% else %} Not available :( {% endif %}</p>
-
+</div>
 <a class='btn btn-outline-secondary' href="{{url_for('edit_pet_details', pet_id=pet.id)}}">Edit</a>
 <a class='btn btn-outline-primary' href="{{url_for('pets_index')}}">See All Pets</a>
 {% endblock %}

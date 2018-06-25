@@ -1,10 +1,10 @@
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, BooleanField
-from wtforms.validators import InputRequired, Optional, Email, NumberRange, URL
-import IPython
+from wtforms.validators import InputRequired, Optional, NumberRange, URL
+import requests as r
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ihaveanothersecret'
 
@@ -15,6 +15,8 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 db = SQLAlchemy(app)
 toolbar = DebugToolbarExtension(app)
+
+pf_api_key = '80345b20b4cf0018e7a3baefae81ed42'
 
 
 class Pet(db.Model):
@@ -36,8 +38,10 @@ class AddPetForm(FlaskForm):
 
     name = StringField("Name of Friend", validators=[InputRequired()])
     species = StringField("Species of Friend", validators=[InputRequired()])
-    photo_url = StringField("Image URL", validators=[URL()])
-    age = IntegerField("Age of Friend", validators=[NumberRange(max=30)])
+    photo_url = StringField("Image URL", validators=[URL(), Optional()])
+    age = IntegerField(
+        "Age of Friend", validators=[InputRequired(),
+                                     NumberRange(max=30)])
     notes = StringField("Additional Notes")
     available = BooleanField("Available?", default='checked')
 
@@ -50,13 +54,25 @@ class EditPetForm(FlaskForm):
     available = BooleanField("Available?", default='checked')
 
 
+# TODO: Fix edge case where get doesn't work
+# Get a random pet from PetFinder
+def get_random_pet():
+    req = r.get("http://api.petfinder.com/pet.getRandom", {
+        "key": pf_api_key,
+        "format": "json",
+        "output": "basic"
+    })
+    return req.json()['petfinder']['pet']
+
+
 @app.route('/')
 def pets_index():
     """ Shows all pets """
 
     pets = Pet.query.all()
+    random_pet = get_random_pet()
 
-    return render_template('index.html', pets=pets)
+    return render_template('index.html', pets=pets, random_pet=random_pet)
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -111,3 +127,7 @@ def edit_pet_details(pet_id):
         return redirect(url_for('pets_index'))
     else:
         return render_template('edit_pet.html', form=form, pet=pet)
+
+
+from IPython import embed
+embed()
